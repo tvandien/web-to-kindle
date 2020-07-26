@@ -1,0 +1,3 @@
+urllib3
+pypandoc
+pymysql
