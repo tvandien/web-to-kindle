@@ -7,6 +7,18 @@ import database
 import mail
 import json
 
+"""
+    - update_ebook
+      - find_number_of_chapters
+        - regex (type: chapter_count, string: 'Ch 1 of <a href=\'/s/2961893/[0-9]+/\'>([0-9]+)</a' )
+      - get_page
+        - get_chapter_from_page
+          - regex (type: chapter_content, string: '(<strong>Chapter.+)</div></div>' )
+        - get_chapter_title
+          -regex (type: chapter_title, string: '<strong>(.+?)</strong>' )
+"""
+
+
 def get_output_directory():
   try:
     with open("settings.json") as settings:
