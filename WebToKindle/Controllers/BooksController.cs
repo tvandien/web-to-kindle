@@ -108,6 +108,78 @@ namespace WebToKindle.Controllers
             return book;
         }
 
+        [HttpGet("create")]
+        public async Task<ActionResult<Book>> CreateBook()
+        {
+            var book = new Book()
+            {
+                ChapterCount = 1,
+                LastUpdate = DateTime.Now,
+                Name = "HPMOR",
+                IndexURL = "https://m.fanfiction.net/s/5782108/1/Harry-Potter-and-the-Methods-of-Rationality",
+                ChapterURL = "https://m.fanfiction.net/s/5782108/{0}/Harry-Potter-and-the-Methods-of-Rationality"
+            };
+            _context.Books.Add(book);
+            _context.SaveChanges();
+
+            var CountType = new RegexType()
+            {
+                Name = RegexTypes.ChapterCount.ToString(),
+                Description = ""
+            };
+            _context.RegexTypes.Add(CountType);
+            _context.SaveChanges();
+
+            var TitleType = new RegexType()
+            {
+                Name = RegexTypes.ChapterTitle.ToString(),
+                Description = ""
+            };
+            _context.RegexTypes.Add(TitleType);
+            _context.SaveChanges();
+
+            var ContentType = new RegexType()
+            {
+                Name = RegexTypes.ChapterContent.ToString(),
+                Description = ""
+            };
+            _context.RegexTypes.Add(ContentType);
+            _context.SaveChanges();
+
+            var regex = new Database.Tables.Regex()
+            {
+                Book = book,
+                RegexString = "Ch 1 of <a href=\'/s/5782108/[0-9]+/\'>([0-9]+)</a",
+                Type = CountType,
+            };
+            _context.Regexes.Add(regex);
+
+            var regex2 = new Database.Tables.Regex()
+            {
+                Book = book,
+                RegexString = "(Chapter .+?)<br></div>",
+                Type = TitleType,
+            };
+            _context.Regexes.Add(regex2);
+
+            var regex3 = new Database.Tables.Regex()
+            {
+                Book = book,
+                RegexString = "<div style='.+?' class='storycontent nocopy' id='storycontent' >(.+?)<div align=center>",
+                Type = ContentType,
+            };
+            _context.Regexes.Add(regex3);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetBook", new { id = book.Id }, book);
+        }
+
+        public class UpdateResult
+        {
+            public int BookId { get; set; }
+            public bool NewChapters { get; set; }
+        }
+
 
         private bool BookExists(int id)
         {
