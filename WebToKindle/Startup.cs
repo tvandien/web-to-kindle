@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WebToKindle.Database;
 using Microsoft.EntityFrameworkCore;
+using WebToKindle.Properties;
 
 namespace WebToKindle
 {
@@ -27,7 +28,7 @@ namespace WebToKindle
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddDbContext<WebToKindleDB>(opt => opt.UseSqlServer(@"Server=db;Database=WebToKindle;User=sa;Password=BvyPSCWPadVJ32za;"));
+            services.AddDbContext<WebToKindleDB>(opt => opt.UseSqlServer(Resources.DbConnectionString));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
