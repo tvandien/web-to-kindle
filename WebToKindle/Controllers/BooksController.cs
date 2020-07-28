@@ -13,6 +13,8 @@ using WebToKindle.Database;
 using System.Text.RegularExpressions;
 using WebToKindle.Database.Tables;
 using WebToKindle.Helper;
+using Microsoft.AspNetCore.Html;
+using System.Globalization;
 
 namespace WebToKindle.Controllers
 {
@@ -258,6 +260,33 @@ namespace WebToKindle.Controllers
             }
 
             return (false, null);
+        }
+
+        [HttpGet("generate/{id}")]
+        public async Task<ActionResult<string>> GenerateHtmlFile(int id)
+        {
+            Book book = _context.Books.First(a => a.Id == id);
+            List<Chapter> chapters = _context.Chapters.Where(a => a.Book == book).OrderBy(a => a.ChapterNumber).ToList();
+            BookTemplate bookTemplate = _context.BookTemplates.First(a => a.Book == book);
+            var stream = System.IO.File.Create(@"output/file.epub");
+            var epubWriter = await Helper.EPubWriter.CreateWriterAsync(stream, book.Name, "-", "-", CultureInfo.CurrentCulture, true);
+
+            epubWriter.Publisher = "WebToKindle";
+            epubWriter.CreationDate = DateTime.Now;
+
+            foreach (var chapter in chapters)
+            {
+                await epubWriter.AddChapterAsync(chapter.ChapterNumber.ToString() + ".xhtml", chapter.Title, chapter.Body);
+
+                //var chapterStream = epubWriter.GetChapterStream(chapter.ChapterNumber.ToString() + ".xhtml", chapter.Title);
+
+            }
+
+            await epubWriter.WriteEndOfPackageAsync();
+            await stream.FlushAsync();
+            stream.Close();
+
+            return "!";
         }
 
         private bool BookExists(int id)
