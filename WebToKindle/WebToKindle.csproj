@@ -9,6 +9,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Helper\Templates\Container.xml" />
+    <None Remove="Helper\Templates\Content.xml" />
+    <None Remove="Helper\Templates\StartingPoint.zip" />
+    <None Remove="Helper\Templates\Toc.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Helper\Templates\Container.xml" />
+    <Content Include="Helper\Templates\Content.xml" />
+    <Content Include="Helper\Templates\Toc.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Helper\Templates\StartingPoint.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.6" />
@@ -18,9 +35,15 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.3" />
+    <PackageReference Include="System.Resources.Extensions" Version="4.7.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Helper\Templates\Template.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Template.resx</DependentUpon>
+    </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -29,6 +52,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Helper\Templates\Template.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Template.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

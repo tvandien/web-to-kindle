@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="BookID">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <!--
+      <dc:title>My title</dc:title>
+      <dc:date opf:event="publication">2011-09-21</dc:date>
+      <dc:creator opf:role="aut" opf:file-as="Jackie, Jackie">Jackie</dc:creator>
+      <dc:language>en</dc:language>
+      <dc:publisher>ePub Bud (www.epubbud.com)</dc:publisher>
+      <dc:identifier id="BookID" opf:scheme="ePubBud">http://www.epubbud.com/epubs/L/3/L3TBBKN5/Me_and_My_Dad.epub</dc:identifier>
+      <meta name="cover" content="cover-image"/>
+    -->
+    <x-metadata>
+      <output content-type="application/x-mobipocket-subscription-magazine" encoding="utf-8"/>
+    </x-metadata>
+  </metadata>
+  <manifest>
+    <!--
+    <item id="story0" href="story0.html" media-type="application/xhtml+xml"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    -->
+  </manifest>
+  <spine toc="ncx">
+    <!--
+    <itemref idref="story0"/>
+    -->
+  </spine>
+  <!--
+  <guide/>
+    -->
+</package>
