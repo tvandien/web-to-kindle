@@ -1,0 +1,26 @@
+version: '3.4'
+
+services:
+  webtokindle:
+    image: ${DOCKER_REGISTRY-}webtokindle
+    build:
+      context: .
+      dockerfile: Dockerfile
+  db:
+    image: "mcr.microsoft.com/mssql/server"
+    ports:
+      - 1433:1433
+    secrets:
+      - mssql_sa_password
+    environment:
+        ACCEPT_EULA: "Y"
+        MSSQL_SA_PASSWORD_FILE: /run/secrets/mssql_sa_password
+    volumes:
+      - ./mount/data:/var/opt/mssql/data 
+      - ./mount/log:/var/opt/mssql/log 
+      - ./mount/secrets:/var/opt/mssql/secrets
+      - ./entrypoint.sh:/entrypoint.sh
+
+secrets:
+  mssql_sa_password:
+    file: ./secrets/mssql_sa_password
