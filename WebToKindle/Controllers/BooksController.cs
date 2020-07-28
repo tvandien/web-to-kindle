@@ -180,6 +180,85 @@ namespace WebToKindle.Controllers
             public bool NewChapters { get; set; }
         }
 
+        [HttpGet("update/{id}")]
+        public async Task<ActionResult<UpdateResult>> Update(int id)
+        {
+            Book book = _context.Books.First(a => a.Id == id);
+            int oldChapterCount = book.ChapterCount;
+            int chapterCount = await GetChapterCount(id);
+
+            var updateResult = new UpdateResult()
+            {
+                BookId = id,
+                NewChapters = oldChapterCount != chapterCount
+            };
+
+            for (int i = 1; i < chapterCount; i++)
+            {
+                var chapterExists = _context.Chapters.Any(a => a.Book.Id == id && a.ChapterNumber == i);
+
+                if (!chapterExists)
+                {
+                    var (chapterFound, chapter) = await GetChapter(book, i, String.Format(book.ChapterURL, i));
+                    if (chapterFound)
+                    {
+                        _context.Chapters.Add(chapter);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
+            return Ok(updateResult);
+        }
+
+        private async Task<int> GetChapterCount(int id)
+        {
+            var book = _context.Books.First(a => a.Id == id);
+            var regex = _context.Regexes.First(a => a.Book.Id == book.Id && a.Type.Name == Database.Tables.RegexTypes.ChapterCount.ToString());
+
+            var webPage = await Helper.Helper.GetWebpage(book.IndexURL);
+            var match = System.Text.RegularExpressions.Regex.Match(webPage, regex.RegexString);
+
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int chapterCount))
+                {
+                    book.ChapterCount = chapterCount;
+                    await _context.SaveChangesAsync();
+
+                    return chapterCount;
+                }
+            }
+
+            return book.ChapterCount;
+        }
+
+        private async Task<(bool, Chapter)> GetChapter(Book book, int chapterNumber, string URL)
+        {
+            var webPage = await Helper.Helper.GetWebpage(URL);
+            var titleRegex = _context.Regexes.First(a => a.Book.Id == book.Id && a.Type.Name == Database.Tables.RegexTypes.ChapterTitle.ToString()).RegexString;
+            var contentRegex = _context.Regexes.First(a => a.Book.Id == book.Id && a.Type.Name == Database.Tables.RegexTypes.ChapterContent.ToString()).RegexString;
+
+            var foundTitle = System.Text.RegularExpressions.Regex.Match(webPage, titleRegex);
+            var foundContent = System.Text.RegularExpressions.Regex.Match(webPage, contentRegex, RegexOptions.Singleline);
+
+            if (foundTitle.Success && foundContent.Success)
+            {
+                return (
+                    true,
+                    new Chapter()
+                    {
+                        Book = book,
+                        ChapterNumber = chapterNumber,
+                        Title = foundTitle.Groups[1].Value,
+                        Body = foundContent.Groups[1].Value,
+                        Version = 1,
+                        LastUpdate = DateTime.Now
+                    });
+            }
+
+            return (false, null);
+        }
 
         private bool BookExists(int id)
         {
