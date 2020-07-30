@@ -124,6 +124,16 @@ namespace WebToKindle.Controllers
             _context.Books.Add(book);
             _context.SaveChanges();
 
+            var bookTemplate = new BookTemplate()
+            {
+                Book = book,
+                Header = "{0}",
+                Chapter = "<html><head><title>Chapter!</title></head><body>{0}</body></html>",
+                Footer = "{0}"
+            };
+            _context.BookTemplates.Add(bookTemplate);
+            _context.SaveChanges();
+
             var CountType = new RegexType()
             {
                 Name = RegexTypes.ChapterCount.ToString(),
