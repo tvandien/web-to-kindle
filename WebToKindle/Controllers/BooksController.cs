@@ -272,8 +272,8 @@ namespace WebToKindle.Controllers
             return (false, null);
         }
 
-        [HttpGet("generate/{id}")]
-        public async Task<ActionResult<string>> GenerateHtmlFile(int id)
+        [HttpGet("generate1/{id}")]
+        public async Task<ActionResult<string>> GenerateHtmlFileEpubFactory(int id)
         {
             Book book = _context.Books.First(a => a.Id == id);
             List<Chapter> chapters = _context.Chapters.Where(a => a.Book == book).OrderBy(a => a.ChapterNumber).ToList();
@@ -297,6 +297,48 @@ namespace WebToKindle.Controllers
             stream.Close();
 
             return "!";
+        }
+
+
+        [HttpGet("generate2/{id}")]
+        public async Task<ActionResult<string>> GenerateHtmlFileEpub4Net(int id)
+        {
+            System.IO.Directory.CreateDirectory("output/chapters");
+            System.IO.Directory.CreateDirectory("output/final");
+            System.IO.Directory.CreateDirectory("output/build");
+            System.IO.Directory.CreateDirectory("output/books");
+            Book book = _context.Books.First(a => a.Id == id);
+            List<Chapter> chapters = _context.Chapters.Where(a => a.Book == book).OrderBy(a => a.ChapterNumber).ToList();
+            BookTemplate bookTemplate = _context.BookTemplates.First(a => a.Book == book);
+
+            List<Epub4Net.Chapter> epubChapters = new List<Epub4Net.Chapter>();
+
+            foreach (Chapter chapter in chapters)
+            {
+                using (var writer = System.IO.File.CreateText("output/chapters/" + chapter.ChapterNumber + ".html"))
+                {
+                    await writer.WriteAsync(String.Format(bookTemplate.Chapter, chapter.Body));
+                }
+                epubChapters.Add(
+                    new Epub4Net.Chapter(
+                        "chapters/" + chapter.ChapterNumber + ".html", 
+                        chapter.ChapterNumber + ".html", 
+                        chapter.Title
+                        )
+                    );
+            }
+
+            var workingDir = System.IO.Directory.GetCurrentDirectory();
+            System.IO.Directory.SetCurrentDirectory("output");
+
+            Epub4Net.Epub epub = new Epub4Net.Epub(book.Name, " - ", epubChapters);
+            epub.Language = "en";
+            Epub4Net.EPubBuilder ePubBuilder = new Epub4Net.EPubBuilder(new Epub4Net.FileSystemManager("final"), "build");
+            
+            var result = ePubBuilder.Build(epub);
+            System.IO.Directory.SetCurrentDirectory(workingDir);
+
+            return result;
         }
 
         private bool BookExists(int id)
