@@ -13,6 +13,8 @@ using WebToKindle.Database;
 using System.Text.RegularExpressions;
 using WebToKindle.Database.Tables;
 using WebToKindle.Helper;
+using Microsoft.AspNetCore.Html;
+using System.Globalization;
 
 namespace WebToKindle.Controllers
 {
@@ -120,6 +122,16 @@ namespace WebToKindle.Controllers
                 ChapterURL = "https://m.fanfiction.net/s/5782108/{0}/Harry-Potter-and-the-Methods-of-Rationality"
             };
             _context.Books.Add(book);
+            _context.SaveChanges();
+
+            var bookTemplate = new BookTemplate()
+            {
+                Book = book,
+                Header = "{0}",
+                Chapter = "<html><head><title>Chapter!</title></head><body>{0}</body></html>",
+                Footer = "{0}"
+            };
+            _context.BookTemplates.Add(bookTemplate);
             _context.SaveChanges();
 
             var CountType = new RegexType()
@@ -258,6 +270,75 @@ namespace WebToKindle.Controllers
             }
 
             return (false, null);
+        }
+
+        [HttpGet("generate1/{id}")]
+        public async Task<ActionResult<string>> GenerateHtmlFileEpubFactory(int id)
+        {
+            Book book = _context.Books.First(a => a.Id == id);
+            List<Chapter> chapters = _context.Chapters.Where(a => a.Book == book).OrderBy(a => a.ChapterNumber).ToList();
+            BookTemplate bookTemplate = _context.BookTemplates.First(a => a.Book == book);
+            var stream = System.IO.File.Create(@"output/file.epub");
+            var epubWriter = await Helper.EPubWriter.CreateWriterAsync(stream, book.Name, "-", "-", CultureInfo.CurrentCulture, true);
+
+            epubWriter.Publisher = "WebToKindle";
+            epubWriter.CreationDate = DateTime.Now;
+
+            foreach (var chapter in chapters)
+            {
+                await epubWriter.AddChapterAsync(chapter.ChapterNumber.ToString() + ".xhtml", chapter.Title, chapter.Body);
+
+                //var chapterStream = epubWriter.GetChapterStream(chapter.ChapterNumber.ToString() + ".xhtml", chapter.Title);
+
+            }
+
+            await epubWriter.WriteEndOfPackageAsync();
+            await stream.FlushAsync();
+            stream.Close();
+
+            return "!";
+        }
+
+
+        [HttpGet("generate2/{id}")]
+        public async Task<ActionResult<string>> GenerateHtmlFileEpub4Net(int id)
+        {
+            System.IO.Directory.CreateDirectory("output/chapters");
+            System.IO.Directory.CreateDirectory("output/final");
+            System.IO.Directory.CreateDirectory("output/build");
+            System.IO.Directory.CreateDirectory("output/books");
+            Book book = _context.Books.First(a => a.Id == id);
+            List<Chapter> chapters = _context.Chapters.Where(a => a.Book == book).OrderBy(a => a.ChapterNumber).ToList();
+            BookTemplate bookTemplate = _context.BookTemplates.First(a => a.Book == book);
+
+            List<Epub4Net.Chapter> epubChapters = new List<Epub4Net.Chapter>();
+
+            foreach (Chapter chapter in chapters)
+            {
+                using (var writer = System.IO.File.CreateText("output/chapters/" + chapter.ChapterNumber + ".html"))
+                {
+                    await writer.WriteAsync(String.Format(bookTemplate.Chapter, chapter.Body));
+                }
+                epubChapters.Add(
+                    new Epub4Net.Chapter(
+                        "chapters/" + chapter.ChapterNumber + ".html", 
+                        chapter.ChapterNumber + ".html", 
+                        chapter.Title
+                        )
+                    );
+            }
+
+            var workingDir = System.IO.Directory.GetCurrentDirectory();
+            System.IO.Directory.SetCurrentDirectory("output");
+
+            Epub4Net.Epub epub = new Epub4Net.Epub(book.Name, " - ", epubChapters);
+            epub.Language = "en";
+            Epub4Net.EPubBuilder ePubBuilder = new Epub4Net.EPubBuilder(new Epub4Net.FileSystemManager("final"), "build");
+            
+            var result = ePubBuilder.Build(epub);
+            System.IO.Directory.SetCurrentDirectory(workingDir);
+
+            return result;
         }
 
         private bool BookExists(int id)
