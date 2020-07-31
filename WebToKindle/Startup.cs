@@ -29,6 +29,7 @@ namespace WebToKindle
         {
             services.AddControllers();
             services.AddDbContext<WebToKindleDB>(opt => opt.UseSqlServer(Resources.DbConnectionString));
+            services.AddRouting(options => options.LowercaseUrls = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
